@@ -1,0 +1,146 @@
+<?php
+
+if(isset($_POST['Submit'])) 
+    {
+
+    //extract data from the post
+    //set POST variabless
+    $fname = $_POST['fname'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    //retrieve the data from the backendless table and check if the email is present in it.
+    $service_url1 = 'https://api.backendless.com/<App-id>/<Rest-api-key>/data/Users';
+    $curl1 = curl_init($service_url1);
+    curl_setopt($curl1, CURLOPT_RETURNTRANSFER, true);
+    $curl_response1 = curl_exec($curl1);
+
+    if ($curl_response1 === false) {
+        $info1 = curl_getinfo($curl1);
+        curl_close($curl1);
+        die('error occured during curl exec. Additioanl info: ' . var_export($info1));
+    }
+    curl_close($curl1);
+    //getting the array which is stored in $curl_response1, putting it in decoded and pulling out only the email field and arranging it properly.
+    $decoded = json_decode($curl_response1);
+    $res1 = array_column($decoded, 'email');
+    $res2 = implode("', '", $res1);
+
+    //checking if the new user email is present in the array or not.
+    if (in_array($email, $res1)) 
+        {
+            echo"<div style='text-align:center'>You have already registered before.</div>"; 
+            echo '<th><strong><u><center><a target="_blank" href="javascript:window.close();">Click here to return.</a></center></u></strong></th>';        
+        }       
+
+    else
+        {
+            //since its not present in the backendless table we will now add it to the backendless table by POST.
+            $ch = curl_init('https://api.backendless.com/<App-id>/<Rest-api-key>/data/Users');
+            $data = array("fname" => $fname, "email" => $email, "password" => $password);
+
+            $data_string = json_encode($data);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($data_string))
+            );
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            //execute post
+            $result = curl_exec($ch);
+            //close connection
+            curl_close($ch);
+
+            echo"<div style='text-align:center'>Thank you for signing up with us ".$fname.".<br> </div>";
+            echo"<div style='text-align:center'>We will be sending you an email shortly.</div>";
+            echo '<th><strong><u><center><a style="color:#2c666d" target="_blank" href="javascript:window.close();">Click here to return.</a></center></u></th>';
+        }
+
+}
+
+else
+{
+
+?>
+<html>
+<head>
+<style> 
+input[type='text'], input[type='email'], input[type='password'] { border : 0.5px solid gray; margin-bottom: 5px; }
+.signup-submit {margin-top:20px;}
+input[type='password'] { 
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+</style>
+</head>
+<body style="text-align:left;">
+
+<div>
+
+    <p align="center"> Please complete the following form to register as a user </p>
+
+    <form method="post" id="signup">
+
+        <table>
+            <tr>
+                <div>
+                    <span class="fname">
+                        <td>
+                            <label>Enter Name * : </label>
+                        </td>                   
+                        <td>
+                            <input type="text" name="fname" value="" size="15" required />
+                        </td>
+                    </span>
+                </div>  
+            </tr>
+
+
+            <tr>
+                <div>
+                    <span class="email">
+                        <td>
+                            <label>Enter Email * : </label>
+                        </td>                   
+                        <td>
+                            <input type="email" name="email" value="" size="40" required />
+                        </td>
+                    </span>
+                </div>  
+            </tr>
+
+                <tr>
+                <div>
+                    <span class="password">
+                        <td>
+                            <label>Enter Password * : </label>
+                        </td>                   
+                        <td>
+                            <input type="password" name="password"  value="" minlength="8" required />
+
+                            <input type="checkbox" onclick="myFunction()"><span class="checkboxtext">Show Password</span>
+                        </td>
+                    </span>
+                </div>  
+            </tr>
+
+            <tr>
+                <div>
+
+                        <td>
+                            <input type="submit" value="Submit" name="Submit" class="Submit">
+                        </td>
+                </div>  
+            </tr>
+        </table>  
+    </form>
+</div>
+</body>
+</html>
+
+<?php
+ }
+?>
